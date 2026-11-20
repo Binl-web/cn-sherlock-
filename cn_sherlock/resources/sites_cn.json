@@ -1,0 +1,311 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-11-20",
+  "defaults": {
+    "timeout": 12,
+    "retries": 2,
+    "workers": 8,
+    "delay": 0.6
+  },
+  "sites": [
+    {
+      "name": "知乎",
+      "category": "问答社区",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://www.zhihu.com/people/{username}",
+      "probe": {
+        "url": "https://www.zhihu.com/api/v4/members/{username}?include=name,url_token,headline",
+        "headers": {
+          "Accept": "application/json, text/plain, */*"
+        },
+        "optional_cookie_env": "CNSHERLOCK_ZHIHU_COOKIE",
+        "retry_on": [403],
+        "retry_delay": 1.8,
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404, 500],
+        "blocked": [401, 403, 429]
+      },
+      "resolve": {
+        "json_field": "url_token",
+        "url": "https://www.zhihu.com/people/{value}"
+      },
+      "doctor": {"claimed": "zhihu"},
+      "notes": "官方 v4 members 接口；200=存在，404/500=不存在。该接口对带 Referer 的请求返回 403，必须保持最小请求头；偶发 403 会自动延迟重试。"
+    },
+    {
+      "name": "豆瓣",
+      "category": "书影音社区",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://www.douban.com/people/{username}/",
+      "probe": {
+        "url": "https://m.douban.com/people/{username}/",
+        "ua": "mobile",
+        "delay": 1.0
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 418, 429],
+        "not_found_markers": ["404 Oops"]
+      },
+      "doctor": {"claimed": "douban"},
+      "notes": "移动版网页可用；电脑版对非登录请求普遍返回 404，不能作为判定依据。"
+    },
+    {
+      "name": "博客园",
+      "category": "技术博客",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://www.cnblogs.com/{username}",
+      "probe": {
+        "url": "https://{username}.cnblogs.com",
+        "username_charset": "ascii",
+        "delay": 0.6
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 429, 521]
+      },
+      "resolve": {"use_final_url": true},
+      "doctor": {"claimed": "dudu"},
+      "notes": "子域名会 301 到 www.cnblogs.com/<用户名>，以重定向后的地址为准。"
+    },
+    {
+      "name": "InfoQ",
+      "category": "技术社区",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://www.infoq.cn/u/{username}",
+      "probe": {
+        "url": "https://www.infoq.cn/u/{username}",
+        "delay": 0.6
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 429]
+      },
+      "doctor": {"claimed": "infoq"},
+      "notes": "个人主页路径即用户名，未注册返回 404。"
+    },
+    {
+      "name": "语雀",
+      "category": "知识库",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://www.yuque.com/{username}",
+      "probe": {
+        "url": "https://www.yuque.com/{username}",
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 429]
+      },
+      "doctor": {"claimed": "yuque"},
+      "notes": "语雀个人空间路径即用户名，未注册返回 404。"
+    },
+    {
+      "name": "科学网",
+      "category": "学术博客",
+      "status": "stable",
+      "confidence": "medium",
+      "url": "https://blog.sciencenet.cn/u/{username}",
+      "probe": {
+        "url": "https://blog.sciencenet.cn/u/{username}",
+        "delay": 0.6
+      },
+      "detect": {
+        "type": "message",
+        "found": [200],
+        "not_found_markers": ["您指定的用户空间不存在"],
+        "blocked": [403, 429]
+      },
+      "doctor": {"claimed": "sciencenet"},
+      "notes": "存在时返回 200 且标题为“科学网—<昵称>的个人资料”；不存在时返回 200 的提示页。"
+    },
+    {
+      "name": "B站",
+      "category": "视频社区",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://space.bilibili.com/{mid}",
+      "fallback_url": "https://search.bilibili.com/all?keyword={username}",
+      "probe": {
+        "url": "https://api.bilibili.com/x/web-interface/search/type?search_type=bili_user&keyword={username}",
+        "headers": {"Referer": "https://search.bilibili.com/"},
+        "bilibili_buvid": true,
+        "delay": 2.0
+      },
+      "detect": {
+        "type": "search",
+        "list_path": "data.result",
+        "match_fields": ["uname"],
+        "strip_html": true,
+        "json_check": {"field": "code", "ok": [0]},
+        "blocked": [403, 412, 429]
+      },
+      "resolve": {
+        "field": "mid",
+        "url": "https://space.bilibili.com/{value}"
+      },
+      "doctor": {"claimed": "老番茄"},
+      "notes": "官方用户搜索接口 + buvid 指纹 Cookie 绕过 412；仅完全同名（uname 精确匹配）才判定命中。"
+    },
+    {
+      "name": "网易云音乐",
+      "category": "音乐社区",
+      "status": "stable",
+      "confidence": "high",
+      "url": "https://music.163.com/#/user/home?id={userId}",
+      "fallback_url": "https://music.163.com/#/search/m/?s={username}&type=1002",
+      "probe": {
+        "url": "https://music.163.com/api/search/get?s={username}&type=1002&limit=20",
+        "headers": {"Referer": "https://music.163.com/"},
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "search",
+        "list_path": "result.userprofiles",
+        "match_fields": ["nickname"],
+        "json_check": {"field": "code", "ok": [200]}
+      },
+      "resolve": {
+        "field": "userId",
+        "url": "https://music.163.com/#/user/home?id={value}"
+      },
+      "doctor": {"claimed": "云音乐VIP"},
+      "notes": "用户搜索接口 type=1002；精确匹配昵称后返回 userId。"
+    },
+    {
+      "name": "CSDN",
+      "category": "技术博客",
+      "status": "stable",
+      "confidence": "medium",
+      "url": "https://blog.csdn.net/{username}",
+      "fallback_url": "https://so.csdn.net/so/search?q={username}",
+      "negative_note": "CSDN 使用文章搜索匹配作者，未命中可能只是文章未被收录，不能完全排除",
+      "probe": {
+        "url": "https://so.csdn.net/api/v3/search?q={username}&t=blog",
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "search",
+        "list_path": "result_vos",
+        "match_fields": ["username", "author"],
+        "json_check": {"field": "total", "ok_min": 1}
+      },
+      "resolve": {"field": "author_space"},
+      "doctor": {"claimed": "cosmoslife"},
+      "notes": "搜索接口命中后按 username/author 精确匹配；author_space 即博主主页。文章搜索对冷门博主覆盖有限。"
+    },
+    {
+      "name": "Gitee",
+      "category": "代码托管",
+      "status": "experimental",
+      "enabled": false,
+      "confidence": "low",
+      "url": "https://gitee.com/{username}",
+      "probe": {
+        "url": "https://gitee.com/{username}",
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 429, 521],
+        "blocked_markers": ["访问受限"]
+      },
+      "doctor": {"claimed": "gitee"},
+      "notes": "实测存在账号也可能被 WAF 返回 403，默认关闭；住宅网络下可尝试开启。"
+    },
+    {
+      "name": "贴吧",
+      "category": "兴趣社区",
+      "status": "experimental",
+      "enabled": false,
+      "confidence": "low",
+      "url": "https://tieba.baidu.com/home/main?un={username}",
+      "probe": {
+        "url": "https://tieba.baidu.com/home/main?un={username}",
+        "delay": 0.8
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 429],
+        "blocked_markers": ["百度安全验证"]
+      },
+      "doctor": {"claimed": "百度贴吧"},
+      "notes": "百度风控较严格，常返回安全验证页；建议在住宅网络或配置 Cookie 后使用。"
+    },
+    {
+      "name": "微博",
+      "category": "社交媒体",
+      "status": "experimental",
+      "enabled": false,
+      "confidence": "low",
+      "url": "https://weibo.com/{username}",
+      "probe": {
+        "url": "https://weibo.com/ajax/side/search?q={username}",
+        "headers": {"Referer": "https://weibo.com/"},
+        "cookie_env": "CNSHERLOCK_WEIBO_COOKIE",
+        "delay": 1.2
+      },
+      "detect": {
+        "type": "status",
+        "found": [200],
+        "not_found": [404],
+        "blocked": [403, 418, 429]
+      },
+      "doctor": {"claimed": "weibo"},
+      "notes": "必须提供登录态 Cookie（环境变量 CNSHERLOCK_WEIBO_COOKIE），否则标记为跳过。"
+    },
+    {
+      "name": "抖音",
+      "category": "短视频",
+      "status": "manual",
+      "confidence": "none",
+      "manual_url": "https://www.douyin.com/search/{username}",
+      "reason": "用户主页使用 sec_uid，搜索接口需要 X-Bogus 签名与登录态，无法仅凭用户名可靠判定。"
+    },
+    {
+      "name": "小红书",
+      "category": "生活方式",
+      "status": "manual",
+      "confidence": "none",
+      "manual_url": "https://www.xiaohongshu.com/search_result?keyword={username}",
+      "reason": "主页使用 user_id + xsec_token，接口强制登录并校验签名。"
+    },
+    {
+      "name": "快手",
+      "category": "短视频",
+      "status": "manual",
+      "confidence": "none",
+      "manual_url": "https://www.kuaishou.com/search/video?searchKey={username}",
+      "reason": "主页使用数字 ID，网页端为纯前端渲染并带签名校验。"
+    },
+    {
+      "name": "微信",
+      "category": "即时通讯",
+      "status": "manual",
+      "confidence": "none",
+      "manual_url": "https://weixin.qq.com/",
+      "reason": "微信没有公开的微信号主页，无法通过公开网页做存在性查询。"
+    }
+  ]
+}

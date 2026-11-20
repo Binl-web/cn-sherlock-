@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cn-sherlock"
+version = "1.0.0"
+description = "面向国内平台的用户名存在性探测工具（零依赖）"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "cn-sherlock contributors" }]
+keywords = ["osint", "username", "china", "sherlock", "cli"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+]
+dependencies = []
+
+[project.scripts]
+cnsherlock = "cn_sherlock.cli:main"
+
+[tool.setuptools]
+packages = ["cn_sherlock"]
+
+[tool.setuptools.package-data]
+cn_sherlock = ["resources/*.json"]

@@ -1,0 +1,2 @@
+# cn-sherlock 只使用 Python 标准库，无需安装第三方依赖。
+# 保留此文件是为了让 pip install -r requirements.txt 等标准流程不报错。
